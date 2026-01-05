@@ -317,7 +317,7 @@
           <section class="card">
             <div class="label">Simulador de caudal aguas arriba → Pamplona</div>
             <div class="small" style="margin-top:6px;">
-              Pamplona (estimado) se calcula con un modelo cargado desde <code>model.json</code>. Si no carga, se usa fallback a suma.
+              Pamplona (estimado) se calcula con la suma de caudales aguas arriba.
             </div>
             <div class="badge" id="modelBadge">Modelo: <b>Cargando…</b></div>
 
@@ -362,7 +362,7 @@
             </div>
 
             <div class="foot">
-              Requisito: <code>model.json</code> y <code>mapa_folium_api.html</code> deben estar en la misma carpeta que este <code>index.html</code> (docs/).
+               
             </div>
           </section>
 
@@ -424,7 +424,7 @@
       }catch(e){
         console.warn("No se pudo cargar model.json. Fallback a suma.", e);
         MODEL = null;
-        modelBadge.innerHTML = `Modelo: <b>FALLBACK</b> <span style="opacity:.7;">(suma)</span>`;
+        modelBadge.innerHTML = `Modelo: <b>SUMA</b> <span style="opacity:.7;"> </span>`;
         update();
       }
     }
