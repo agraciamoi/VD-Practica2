@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Simulador de caudal — Pamplona</title>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --card: #121a2c;
+      --text: #e8eefc;
+      --muted: #a9b7d6;
+      --border: rgba(255,255,255,.10);
+      --accent: #6ea8ff;
+      --ok: #34d399;
+      --warn: #fbbf24;
+      --bad: #fb7185;
+    }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: linear-gradient(180deg, #070b14 0%, var(--bg) 100%);
+      color: var(--text);
+    }
+    .wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    header {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    h1 { margin: 0; font-size: 22px; }
+    .subtitle { margin: 0; color: var(--muted); line-height: 1.35; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: rgba(18, 26, 44, 0.75);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      backdrop-filter: blur(6px);
+    }
+    .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 10px 0;
+    }
+    .label { font-weight: 600; }
+    .small { color: var(--muted); font-size: 13px; }
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+    }
+    .value-pill {
+      min-width: 92px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      padding: 6px 10px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.06);
+    }
+
+    .kpi {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .kpi > div {
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      border-radius: 14px;
+      padding: 12px;
+    }
+    .kpi .k { color: var(--muted); font-size: 12px; margin-bottom: 6px; }
+    .kpi .v { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      font-weight: 700;
+      margin-top: 10px;
+      width: fit-content;
+    }
+    .dot {
+      width: 10px; height: 10px; border-radius: 99px;
+      background: var(--ok);
+      box-shadow: 0 0 0 4px rgba(52,211,153,.18);
+    }
+
+    .imgbox {
+      margin-top: 12px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      background: rgba(255,255,255,.03);
+    }
+
+    .foot {
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+    .btnrow { display:flex; gap:10px; flex-wrap:wrap; margin-top: 12px; }
+    button {
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    button:hover { background: rgba(255,255,255,.10); }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Simulador de caudal aguas arriba → Pamplona</h1>
+      <p class="subtitle">
+        Ajusta el caudal en las estaciones aguas arriba (A067, A152, A159). El caudal estimado en Pamplona se calcula como la suma.
+        Si supera el umbral, se activa la alerta y se muestran las zonas inundables en el mapa.
+      </p>
+    </header>
+
+    <div class="grid">
+      <section class="card">
+        <div class="row">
+          <div>
+            <div class="label">A067</div>
+            <div class="small">Caudal (m³/s)</div>
+          </div>
+          <div class="value-pill" id="v067">0</div>
+        </div>
+        <input id="s067" type="range" min="0" max="300" step="1" value="50" />
+
+        <div class="row">
+          <div>
+            <div class="label">A152</div>
+            <div class="small">Caudal (m³/s)</div>
+          </div>
+          <div class="value-pill" id="v152">0</div>
+        </div>
+        <input id="s152" type="range" min="0" max="300" step="1" value="60" />
+
+        <div class="row">
+          <div>
+            <div class="label">A159</div>
+            <div class="small">Caudal (m³/s)</div>
+          </div>
+          <div class="value-pill" id="v159">0</div>
+        </div>
+        <input id="s159" type="range" min="0" max="300" step="1" value="70" />
+
+        <div class="kpi">
+          <div>
+            <div class="k">Suma aguas arriba</div>
+            <div class="v" id="sumUp">0</div>
+          </div>
+          <div>
+            <div class="k">Pamplona (estimado)</div>
+            <div class="v" id="sumPam">0</div>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top: 12px;">
+          <div>
+            <div class="label">Umbral de inundación</div>
+            <div class="small">Se activa si Pamplona &gt; umbral</div>
+          </div>
+          <div class="value-pill" id="thrText">200</div>
+        </div>
+        <input id="thr" type="range" min="50" max="600" step="10" value="200" />
+
+        <div class="status" id="status">
+          <span class="dot" id="dot"></span>
+          <span id="statusText">NORMAL</span>
+        </div>
+
+        <div class="btnrow">
+          <button id="reset">Reset</button>
+          <button id="exampleFlood">Ejemplo inundación</button>
+          <button id="exampleNormal">Ejemplo normal</button>
+        </div>
+
+        <div class="foot">
+          Nota: este es un prototipo de visualización. La suma es una simplificación para ilustrar la lógica de umbral/alerta.
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="label">Mapa</div>
+        <div class="small">Se encienden/apagan las zonas inundables automáticamente según el estado</div>
+
+        <div class="imgbox" style="height:640px;">
+          <!-- IMPORTANTE: ajusta el src si el mapa está en otra carpeta (por ejemplo exports/mapa_folium_api.html) -->
+          <iframe id="mapFrame"
+                  src="mapa_folium_api.html"
+                  style="width:100%;height:640px;border:0;"></iframe>
+        </div>
+
+        <div class="foot">
+          Zonas inundables de Pamplona.
+        </div>
+      </section>
+    </div>
+  </div>
+
+<script>
+  const s067 = document.getElementById("s067");
+  const s152 = document.getElementById("s152");
+  const s159 = document.getElementById("s159");
+  const thr  = document.getElementById("thr");
+
+  const v067 = document.getElementById("v067");
+  const v152 = document.getElementById("v152");
+  const v159 = document.getElementById("v159");
+
+  const sumUp  = document.getElementById("sumUp");
+  const sumPam = document.getElementById("sumPam");
+  const thrText = document.getElementById("thrText");
+
+  const dot = document.getElementById("dot");
+  const statusText = document.getElementById("statusText");
+
+  const resetBtn = document.getElementById("reset");
+  const exFlood = document.getElementById("exampleFlood");
+  const exNormal = document.getElementById("exampleNormal");
+
+  const mapFrame = document.getElementById("mapFrame");
+  let mapReady = false;
+
+  function fmt(x){ return Number(x).toFixed(0); }
+
+  // Intenta llamar a setLayerVisible; si la capa aún no está lista, reintenta
+  function toggleInundables(visible){
+    if(!mapReady) return;
+
+    let tries = 0;
+    const maxTries = 20;   // ~2s si intervalo 100ms
+    const interval = 100;
+
+    const timer = setInterval(() => {
+      tries++;
+      try{
+        const w = mapFrame.contentWindow;
+        if (w && typeof w.setLayerVisible === "function") {
+          w.setLayerVisible("Zonas inundables", visible);
+          // hacemos 2 llamadas seguidas por robustez
+          setTimeout(() => {
+            try { w.setLayerVisible("Zonas inundables", visible); } catch(e){}
+          }, 150);
+
+          clearInterval(timer); // ya lo intentamos cuando existe la función
+        }
+      }catch(e){
+        // Si hubiese problema de origen distinto, aquí lo verías
+        // console.warn(e);
+      }
+      if(tries >= maxTries) clearInterval(timer);
+    }, interval);
+  }
+
+  // Espera a que cargue el iframe y a que la API exista
+  mapFrame.addEventListener("load", () => {
+    const t = setInterval(() => {
+      try{
+        const w = mapFrame.contentWindow;
+        if (w && typeof w.setLayerVisible === "function") {
+          mapReady = true;
+          clearInterval(t);
+          update(); // refresca estado actual
+        }
+      }catch(e){}
+    }, 50);
+  });
+
+  function setFloodUI(flood){
+
+    // ✅ mandar orden al mapa (esto es lo importante)
+    const iframe = document.getElementById("mapFrame");
+    if (iframe && iframe.contentWindow) {
+      iframe.contentWindow.postMessage({
+        type: "setLayerVisible",
+        name: "Zonas inundables",
+        visible: flood
+      }, "*");
+    }
+
+    // UI
+    if (flood) {
+      statusText.textContent = "INUNDACIÓN";
+      dot.style.background = "var(--bad)";
+      dot.style.boxShadow = "0 0 0 4px rgba(251,113,133,.18)";
+    } else {
+      statusText.textContent = "NORMAL";
+      dot.style.background = "var(--ok)";
+      dot.style.boxShadow = "0 0 0 4px rgba(52,211,153,.18)";
+    }
+  }
+
+  function update() {
+    const a067 = Number(s067.value);
+    const a152 = Number(s152.value);
+    const a159 = Number(s159.value);
+    const threshold = Number(thr.value);
+
+    v067.textContent = fmt(a067);
+    v152.textContent = fmt(a152);
+    v159.textContent = fmt(a159);
+
+    const sum = a067 + a152 + a159;
+    sumUp.textContent = fmt(sum);
+    sumPam.textContent = fmt(sum);
+
+    thrText.textContent = fmt(threshold);
+
+    const flood = sum > threshold;
+
+    // 🔥 aquí: reintento robusto
+    toggleInundables(flood);
+
+    setFloodUI(flood);
+  }
+
+  [s067, s152, s159, thr].forEach(el => el.addEventListener("input", update));
+
+  resetBtn.addEventListener("click", () => {
+    s067.value = 50; s152.value = 60; s159.value = 70; thr.value  = 200;
+    update();
+  });
+
+  exFlood.addEventListener("click", () => {
+    s067.value = 120; s152.value = 120; s159.value = 120; thr.value  = 200;
+    update();
+  });
+
+  exNormal.addEventListener("click", () => {
+    s067.value = 30; s152.value = 40; s159.value = 35; thr.value  = 200;
+    update();
+  });
+
+  update();
+</script>
+</body>
+</html>
